@@ -1,0 +1,14 @@
+a {
+  animation: rotate .2s ease infinite;
+  &:active {
+    opacity: .8;
+  }
+}
+@keyframes rotate {
+  to {
+    transform: rotate(0);
+  }
+  from {
+    transform: rotate(100deg);
+  }
+}
