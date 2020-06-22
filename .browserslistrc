@@ -1,5 +1,9 @@
 > 2%
-not dead
-last 30 versions
-Firefox >= 10
+not ie <= 8
+last 10 versions
+Firefox >= 20
 ie 6-11
+iOS >= 6
+safari >= 6
+Android > 4
+android >= 4.4

@@ -3,16 +3,15 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const OptimizeCssAssetsWebpackPlugin = require('optimize-css-assets-webpack-plugin')
-// const CopyWebpackPlugin = require('copy-webpack-plugin')
+const uglify = require('uglifyjs-webpack-plugin')
+const isDev = process.env.NODE_ENV === 'development'
+const { pages } = require('./utils')
 
 module.exports = {
   mode: 'development',
-  entry: {
-    'pages/home/index': resolve(__dirname, '../src/pages/home/index.js'),
-    'pages/about/index': resolve(__dirname, '../src/pages/about/index.js')
-  },
+  entry: pages().entrys,
   output: {
-    filename: '[name].js',
+    filename: 'pages/home/[name].js',
     path: resolve(__dirname, '../dist')
   },
   optimization: {
@@ -20,7 +19,7 @@ module.exports = {
       /**
        * css压缩
        */
-      new OptimizeCssAssetsWebpackPlugin()
+      !isDev && new OptimizeCssAssetsWebpackPlugin()
     ]
   },
   module: {
@@ -31,11 +30,14 @@ module.exports = {
           {
             loader: MiniCssExtractPlugin.loader,
             options: {
-              hmr: process.env.NODE_ENV === 'development',
+              publicPath: '/css',
+              hmr: isDev,
               reloadAll: true
             }
           },
-          'css-loader',
+          {
+            loader: 'css-loader'
+          },
           'postcss-loader',
           'sass-loader'
         ]
@@ -44,12 +46,33 @@ module.exports = {
         test: /\.(png|jpg|jpeg|gif|svg)$/,
         use: [
           {
-            loader: 'file-loader',
+            loader: 'url-loader',
             options: {
-              name: '[name].[ext]',
-              publicPath: './images/',
+              limit: 8192,
+              name: '[name].[hash].[ext]',
+              publicPath: '/images',
               outputPath: 'images/'
             }
+          }
+        ]
+      },
+      {
+        test: /\.(html)$/i,
+        use: [
+          {
+            loader: 'html-loader',
+            options: {
+              esModule: true
+            }
+          }
+        ]
+      },
+      {
+        test: /\.(js)$/i,
+        exclude: /(node_modules|bower_components)$/,
+        use: [
+          {
+            loader: 'babel-loader'
           }
         ]
       }
@@ -61,21 +84,25 @@ module.exports = {
       filename: 'pages/home/index.html',
       template: resolve(__dirname, '../src/pages/home/index.html'),
       minify: false,
-      chunks: ['index']
+      chunks: ['pages/home/index']
     }),
     new HtmlWebpackPlugin({
       filename: 'pages/about/index.html',
       template: resolve(__dirname, '../src/pages/about/index.html'),
       minify: false,
-      chunks: ['index']
+      chunks: ['pages/about/index']
     }),
     /*
     * 将css提取到单独的css文件中
     * */
     new MiniCssExtractPlugin({
-      filename: '[name].[hash].css',
+      filename: isDev ? 'css/[name].css' : 'css/css.[hash].css',
       chunkFilename: '[id].[hash].css'
-    })
+    }),
+    /*
+    * 压缩js
+    * */
+    new uglify()
   ],
   resolve: {
     alias: {
